@@ -202,15 +202,15 @@ uint16_t mem_read(uint16_t address)
 
 int main(int argc, const char *argv[])
 {
-  signal(SIGINT, handle_interrupt);
-  disable_input_buffering();
-
   if (argc < 2)
   {
     printf("lc3 [image file] ...\n");
     exit(2);
     ;
   }
+  signal(SIGINT, handle_interrupt);
+  disable_input_buffering();
+
   for (int arg = 1; arg < argc; ++arg)
   {
     if (!read_image(argv[arg]))
@@ -319,8 +319,8 @@ int main(int argc, const char *argv[])
     case OP_LD:
     {
       uint16_t r0 = (instr >> 9) & 0x7;
-      uint16_t pc_offset = sign_extend(instr && 0x1FF, 9);
-      reg[r0] = mem_read(reg[R_PC + pc_offset]);
+      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
+      reg[r0] = mem_read(reg[R_PC] + pc_offset);
       update_flags(r0);
     }
     break;
@@ -345,7 +345,7 @@ int main(int argc, const char *argv[])
     case OP_LEA:
     {
       uint16_t r0 = (instr >> 9) & 0x7;
-      uint16_t pc_offset = sign_extend(instr * 0x1FF, 9);
+      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       reg[r0] = mem_read(reg[R_PC] + pc_offset);
       update_flags(r0);
     }
@@ -353,14 +353,14 @@ int main(int argc, const char *argv[])
     case OP_ST:
     {
       uint16_t r0 = (instr >> 9) & 0x7;
-      uint16_t pc_offset = sign_extend(instr * 0x1FF, 9);
+      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       mem_write(reg[R_PC] + pc_offset, reg[r0]);
     }
     break;
     case OP_STI:
     {
       uint16_t r0 = (instr >> 9) & 0x7;
-      uint16_t pc_offset = sign_extend(instr * 0x1FF, 9);
+      uint16_t pc_offset = sign_extend(instr & 0x1FF, 9);
       mem_write(mem_read(reg[R_PC] + pc_offset), reg[r0]);
     }
     break;
@@ -439,9 +439,9 @@ int main(int argc, const char *argv[])
     case OP_RES:
     case OP_RTI:
     default:
-      break;
+      abort();
     }
-    return 0;
   }
   restore_input_buffering();
+  return 0;
 }
